@@ -29,7 +29,7 @@ struct PlayMode : Mode {
 
 	int walkoDir = 0; //0 = right, 1 = down, 2 = left, 3 yp
 
-	int playerAttr = 0;
+	int playerAttr = 1;
 	int playerIdx = 0;
 
 	//player position:

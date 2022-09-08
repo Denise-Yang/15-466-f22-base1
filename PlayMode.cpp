@@ -42,14 +42,9 @@ PlayMode::PlayMode() {
 	// or, at least, if you do hardcode them like this,
 	//  make yourself a script that spits out the code that you paste in here
 	//   and check that script into your repository.
-	// int fdr = open( "maps.txt", O_RDONLY);
-    // if (fdr >= 0) {
 
 
     // copies all data into buffer
-	// std::vector<unsigned char>palettes;
-	//read_chunk<unsigned char>(paletteBinary, "pal0", &palettes);
-	//printf("suze %lu\n", palettes.size());
 	int paletteIdx = 0;
 	int palTableIdx = 0;
 	for (int i = 0; i < colors.size();i+=10){
@@ -64,9 +59,7 @@ PlayMode::PlayMode() {
 		glm::u8 ff = 255;
 		glm::u8vec4 color = {r,g,b,ff};
 		ppu.palette_table[palTableIdx][paletteIdx] = color;
-		paletteIdx++;
-		
-		printf("(%d,%d,%d): r %d\n", palTableIdx, colors[i+1], colors[i+2], r);//do palette i-38
+		paletteIdx++;		
 	}
 	
 	
@@ -87,15 +80,12 @@ PlayMode::PlayMode() {
 				uint8_t bit0 = 0;
 				uint8_t bit1 = 0;
 				for (uint32_t x = 0; x < 8; ++x) {
-					if (tiles[baseIndex + y*8+x]-48!=0) printf("%d",   tiles[baseIndex + y*8+x]-48);
-					if (tiles[baseIndex + y*8+x]-48!=0) printf(" %d",   tiles[baseIndex + y*8+x]-48);
 
 					bit0 = (bit0 << 1) | (tiles[baseIndex + y*8+x]-48);
 					bit1 = (bit1 << 1) | (tiles[baseIndex + 64 + y*8+x]-48);
 				}
 				tile.bit0[y] = bit0;
 				tile.bit1[y] = bit1;
-				printf("\n");
 			}
 			ppu.tile_table[index] = tile;
 		}
@@ -195,7 +185,6 @@ bool PlayMode::handle_event(SDL_Event const &evt, glm::uvec2 const &window_size)
 }
 
 bool PlayMode::overlappingPlayer(float x,float y){
-	if ((x >= player_at.x - 8 && x <= player_at.x+8) && (y >= player_at.y-8 && y <= player_at.y + 8)) printf("overlap \n");
 	return (x >= player_at.x - 8 && x <= player_at.x+8) && (y >= player_at.y-8 && y <= player_at.y + 8);
 }
 void PlayMode::update(float elapsed) {
@@ -206,10 +195,10 @@ void PlayMode::update(float elapsed) {
 	background_fade -= std::floor(background_fade);
 
 	constexpr float PlayerSpeed = 30.0f;
-	constexpr float WalkoSpeed = 18.0f;
+	constexpr float WalkoSpeed = 15.0f;
 	float dx = 0;
 	float dy = 0;
-	float diff = WalkoSpeed*elapsed;
+	float diff = WalkoSpeed*elapsed+.5;
 	if(walkoDir == 0) dx += WalkoSpeed*elapsed;
 	if(walkoDir == 2) dx -= WalkoSpeed*elapsed;
 	if(walkoDir == 1) dy -= WalkoSpeed*elapsed;
@@ -223,10 +212,10 @@ void PlayMode::update(float elapsed) {
 
 	float x= (walko_at.x-4 + dx+8)/8;
 	float y= (walko_at.y+4 + dy+8)/8;
-	bool onPlayer0 = overlappingPlayer(walko_at.x-4+diff,walko_at.y+4);
-	bool onPlayer1 = overlappingPlayer(walko_at.x-4,walko_at.y+4-diff);
-	bool onPlayer2 = overlappingPlayer(walko_at.x-4-diff,walko_at.y+4);
-	bool onPlayer3 = overlappingPlayer(walko_at.x-4,walko_at.y+4+diff);
+	bool onPlayer0 = overlappingPlayer(walko_at.x-4,walko_at.y+4);
+	// bool onPlayer1 = overlappingPlayer(walko_at.x-4,walko_at.y+4-diff);
+	// bool onPlayer2 = overlappingPlayer(walko_at.x-4-diff,walko_at.y+4);
+	// bool onPlayer3 = overlappingPlayer(walko_at.x-4,walko_at.y+4+diff);
 	int currVal = map[(int)((((int)y+2)%PPU466::BackgroundHeight)*PPU466::BackgroundWidth+x)]-48;
 
 	int rightVal = map[(int)((((int)y+2)%PPU466::BackgroundHeight)*PPU466::BackgroundWidth+x+diff)]-48;
@@ -242,22 +231,14 @@ void PlayMode::update(float elapsed) {
 	if (walkoDir ==2) currVal = leftVal;
 	if (walkoDir ==3) currVal = upVal;
 	
-	if (!(currVal == 0) || (onPlayer0 && playerAttr == 0)){
+	if (!(onPlayer0 && playerAttr == 1)&&(!(currVal == 0) || (onPlayer0 && playerAttr == 0))){
 		walko_at.y += dy*2;
 		walko_at.x += dx*2;
-	} else if (!(rightVal == 0) || (onPlayer0 && playerAttr == 0)){
-		walko_at.x += dx*2;
-		walkoDir = 0;
-	} else if (!(downVal == 0) || (onPlayer1 && playerAttr == 0)){
-		walko_at.y -= dy*2;
-		walkoDir = 1;
-	} else if (!(leftVal == 0) || (onPlayer2 && playerAttr == 0)){
-		walko_at.x -= dx*2;
-		walkoDir = 2;
-	}else if (!(upVal == 0) || (onPlayer3 && playerAttr == 0)){
-		walko_at.y += dy*2;
-		walkoDir = 3;
 	}
+	else{
+		walkoDir = rand()%4;
+	}
+
 	
 
 
@@ -288,7 +269,6 @@ void PlayMode::draw(glm::uvec2 const &drawable_size) {
 	for (uint32_t y = 0; y < PPU466::BackgroundHeight; ++y) {
 		for (uint32_t x = 0; x < PPU466::BackgroundWidth; ++x) {
 			//TODO: make weird plasma thing
-			//if (map[x+PPU466::BackgroundWidth*y]-48==3) printf("map %d \n", map[x+PPU466::BackgroundWidth*y]-48);
 			ppu.background[x+PPU466::BackgroundWidth*y] = map[x+PPU466::BackgroundWidth*((y+2)%PPU466::BackgroundHeight)]-48;
 		}
 	}
