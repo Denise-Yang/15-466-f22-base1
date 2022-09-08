@@ -185,7 +185,7 @@ bool PlayMode::handle_event(SDL_Event const &evt, glm::uvec2 const &window_size)
 }
 
 bool PlayMode::overlappingPlayer(float x,float y){
-	return (x >= player_at.x - 8 && x <= player_at.x+8) && (y >= player_at.y-8 && y <= player_at.y + 8);
+	return (x >= player_at.x -  4&& x <= player_at.x+4) && (y >= player_at.y-4 && y <= player_at.y + 4);
 }
 void PlayMode::update(float elapsed) {
 
@@ -195,10 +195,10 @@ void PlayMode::update(float elapsed) {
 	background_fade -= std::floor(background_fade);
 
 	constexpr float PlayerSpeed = 30.0f;
-	constexpr float WalkoSpeed = 15.0f;
+	constexpr float WalkoSpeed = 10.0f;
 	float dx = 0;
 	float dy = 0;
-	float diff = WalkoSpeed*elapsed+.5;
+	float diff = WalkoSpeed*elapsed;
 	if(walkoDir == 0) dx += WalkoSpeed*elapsed;
 	if(walkoDir == 2) dx -= WalkoSpeed*elapsed;
 	if(walkoDir == 1) dy -= WalkoSpeed*elapsed;
@@ -212,11 +212,16 @@ void PlayMode::update(float elapsed) {
 
 	float x= (walko_at.x-4 + dx+8)/8;
 	float y= (walko_at.y+4 + dy+8)/8;
-	bool onPlayer0 = overlappingPlayer(walko_at.x-4,walko_at.y+4);
+	bool onPlayer0 = overlappingPlayer(walko_at.x,walko_at.y);
+	bool onPlayer2 = overlappingPlayer(walko_at.x,walko_at.y+7);
+	bool onPlayer3 = overlappingPlayer(walko_at.x-7,walko_at.y);
+	bool onPlayer1 = overlappingPlayer(walko_at.x-7,walko_at.y+7);
+	bool onPlayer = onPlayer3 || onPlayer2 || onPlayer1 || onPlayer0;
+
 	// bool onPlayer1 = overlappingPlayer(walko_at.x-4,walko_at.y+4-diff);
 	// bool onPlayer2 = overlappingPlayer(walko_at.x-4-diff,walko_at.y+4);
 	// bool onPlayer3 = overlappingPlayer(walko_at.x-4,walko_at.y+4+diff);
-	int currVal = map[(int)((((int)y+2)%PPU466::BackgroundHeight)*PPU466::BackgroundWidth+x)]-48;
+	int currVal = map[(int)((((int)(walko_at.y+4+8)/8+2)%PPU466::BackgroundHeight)*PPU466::BackgroundWidth+(walko_at.x-4+8)/8)]-48;
 
 	int rightVal = map[(int)((((int)y+2)%PPU466::BackgroundHeight)*PPU466::BackgroundWidth+x+diff)]-48;
 	int leftVal = map[(int)((((int)y+2)%PPU466::BackgroundHeight)*PPU466::BackgroundWidth+x-diff)]-48;
@@ -231,7 +236,7 @@ void PlayMode::update(float elapsed) {
 	if (walkoDir ==2) currVal = leftVal;
 	if (walkoDir ==3) currVal = upVal;
 	
-	if (!(onPlayer0 && playerAttr == 1)&&(!(currVal == 0) || (onPlayer0 && playerAttr == 0))){
+	if (!(onPlayer && playerAttr == 1)&&(!((currVal == 0) || (onPlayer && playerAttr == 0)))){
 		walko_at.y += dy*2;
 		walko_at.x += dx*2;
 	}
