@@ -1,6 +1,7 @@
 #include "PPU466.hpp"
 
 #include "Load.hpp"
+
 #include "GL.hpp"
 #include "gl_compile_program.hpp"
 #include "gl_errors.hpp"
@@ -66,6 +67,8 @@ Load< PPUDataStream > data_stream(LoadTagDefault);
 //-------------------------------------------------------------------
 
 PPU466::PPU466() {
+
+
 	for (auto &palette : palette_table) {
 		palette[0] = glm::u8vec4(0x00, 0x00, 0x00, 0x00);
 		palette[1] = glm::u8vec4(0x44, 0x44, 0x44, 0xff);
